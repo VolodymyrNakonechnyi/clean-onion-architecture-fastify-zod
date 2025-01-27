@@ -1,0 +1,40 @@
+name: hospital
+services:
+  app:
+    container_name: hospital-app
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+      - URL_MONGO=mongodb://mongodb:27017/Hospital
+    depends_on:
+      - mongodb
+    networks:
+      - hospital-network
+    restart: unless-stopped
+
+  mongodb:
+    container_name: hospital-mongodb
+    image: mongo:latest
+    environment:
+      - MONGODB_DATABASE=Hospital
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - hospital-network
+    restart: unless-stopped
+    command: mongod --quiet --logpath /dev/null
+
+networks:
+  hospital-network:
+    name: hospital-network
+    driver: bridge
+
+volumes:
+  mongodb_data:
+    name: hospital-mongodb-data
