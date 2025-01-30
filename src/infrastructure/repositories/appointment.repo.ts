@@ -26,6 +26,16 @@ export class AppointmentRepository implements IAppointmentRepository {
         return AppointmentMapper.toDomain(appointment);
     }
 
+    async getRelevantAppointments(): Promise<IAppointment[]> {
+        const now = Date.now();
+
+        const appointments = await appointmentDAO.find({
+            slot: { $gte: now } // all future appointments from current date
+        });
+        
+        return AppointmentMapper.toDomainArray(appointments);
+    }
+
     async getAppointment(id: AppointmentId): Promise<IAppointment | undefined> {
         const appointment = await appointmentDAO.findOne(id);
         
@@ -39,7 +49,7 @@ export class AppointmentRepository implements IAppointmentRepository {
     async cancelAppointment(id: AppointmentId): Promise<IAppointment | undefined | null> {
         const appointment = await appointmentDAO.findOne(id);
         if (!appointment) {
-            return null;
+            return;
         }
     
         const updatedAppointment = await appointmentDAO.findOneAndUpdate(
@@ -48,10 +58,15 @@ export class AppointmentRepository implements IAppointmentRepository {
             { new: true }
         );
     
+        if(!updatedAppointment) {
+            return;
+        }
+
         await doctorDAO.findOneAndUpdate(
             { id: appointment.doctorId },
             { $addToSet: { slots: appointment.slot } }
         );
+
     
         return AppointmentMapper.toDomain(updatedAppointment);
     }
@@ -59,7 +74,7 @@ export class AppointmentRepository implements IAppointmentRepository {
     async completedAppointment(id: AppointmentId): Promise<IAppointment | undefined | null> {
         const appointment = await appointmentDAO.findOne(id);
         if (!appointment) {
-            return null;
+            return;
         }
     
         const updatedAppointment = await appointmentDAO.findOneAndUpdate(
@@ -67,6 +82,10 @@ export class AppointmentRepository implements IAppointmentRepository {
             { status: AppointmentStatus.COMPLETED },
             { new: true }
         );
+
+        if(!updatedAppointment) {
+            return;
+        }
 
         return AppointmentMapper.toDomain(updatedAppointment);
     }
@@ -77,7 +96,7 @@ export class AppointmentRepository implements IAppointmentRepository {
     ): Promise<IAppointment | undefined | null> {
         const appointment = await appointmentDAO.findOne(id);
         if (!appointment) {
-            return null;
+            return;
         }
     
         const updatedAppointment = await appointmentDAO.findOneAndUpdate(
@@ -89,6 +108,10 @@ export class AppointmentRepository implements IAppointmentRepository {
             { new: true }
         );
     
+        if(!updatedAppointment) {
+            return;
+        }
+
         await doctorDAO.findOneAndUpdate(
             { id: appointment.doctorId },
             { $addToSet: { slots: appointment.slot } }
