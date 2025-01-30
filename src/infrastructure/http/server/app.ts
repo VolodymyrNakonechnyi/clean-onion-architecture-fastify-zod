@@ -22,7 +22,35 @@ export class App {
                   keywords: ['kind', 'modifier']
                 }
               },
-            logger: true
+              logger: {
+                transport: {
+                    targets: [
+                        // File logs with rotation
+                        {
+                            target: 'pino-roll',
+                            options: {
+                                file: './logs/app.log',
+                                size: '10M',
+                                interval: '1d',
+                                mkdir: true,
+                                sync: false
+                            },
+                            level: 'debug'
+                        },
+                        // Console logs
+                        {
+                            target: 'pino-pretty',
+                            options: {
+                                translateTime: 'yyyy-mm-dd HH:MM:ss.l',
+                                ignore: 'pid,hostname',
+                                messageFormat: '{level} | {msg}'
+                            },
+                            level: 'debug'
+                        }
+                    ]
+                },
+                level: 'debug'
+            }
         });
     }
 
