@@ -83,6 +83,12 @@ export class App {
                         datetime: data.appointmentDate,
                     }
                 });
+
+                console.log('Appointment reminder triggered',
+                    JSON.stringify({
+                        id: data.userId,
+                        datetime: data.appointmentDate,
+                    }))
             })
 
 

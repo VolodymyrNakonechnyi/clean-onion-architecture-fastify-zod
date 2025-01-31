@@ -14,10 +14,8 @@ export class NotificationReminder extends EventEmitter {
     private appointmentRepository: IAppointmentRepository;
     private reminderCallbacks: ReminderCallback[] = [];
     private readonly reminderIntervals: number[] = [
-        720 * 60 * 60 * 1000, // 1 month
         24 * 60 * 60 * 1000, // 24 hours
         2 * 60 * 60 * 1000,  // 2 hour
-        15 * 60 * 1000       // 15 minutes
     ];
 
     constructor(appointmentRepository: IAppointmentRepository) {
@@ -73,11 +71,14 @@ export class NotificationReminder extends EventEmitter {
             
             for (const reminderTime of reminderTimes) {
                 if (this.isWithinOneMinute(now, reminderTime)) {
-                    this.emit('reminder', {
+                    const reminderData = {
                         userId: appointment.userId,
                         appointmentDate: appointment.slot,
                         timeBeforeAppointment: this.getTimeBeforeAppointment(reminderTime, appointment.slot)
-                    });
+                    };
+                    
+                    // Notify all registered callbacks
+                    this.reminderCallbacks.forEach(callback => callback(reminderData));
                 }
             }
         }
