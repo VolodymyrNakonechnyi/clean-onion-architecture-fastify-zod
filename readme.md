@@ -59,12 +59,7 @@ Notifications are logged to a .log file in the format:
 
 ### Installation
 ```bash
-npm i && npm run dev
-```
-
-### Database Setup
-```bash
-npm run prefill
+pnpm i && pnpm build && pnpm start
 ```
 
 ## Tech Stack
