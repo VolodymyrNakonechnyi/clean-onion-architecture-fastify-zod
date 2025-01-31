@@ -8,6 +8,7 @@ import routes from "../routes/index.js";
 import { UserRepository } from "../../repositories/user.repo.js";
 import { DoctorRepository } from "../../repositories/doctor.repo.js";
 import { AppointmentRepository } from "../../repositories/appointment.repo.js";
+import { NotificationReminder } from "../../../core/services/notification.srv.js";
 
 export class App {
     private app: FastifyInstance;
@@ -72,6 +73,24 @@ export class App {
             const appointmentRepository = new AppointmentRepository();
             const doctorRepository = new DoctorRepository();
             const userRepository = new UserRepository();
+
+            const notificationReminder = new NotificationReminder(appointmentRepository);
+            notificationReminder.onReminder((data) => {
+                this.app.log.info({
+                    msg: 'Appointment reminder triggered',
+                    appointment: {
+                        id: data.userId,
+                        datetime: data.appointmentDate,
+                    }
+                });
+
+                console.log('Appointment reminder triggered',
+                    JSON.stringify({
+                        id: data.userId,
+                        datetime: data.appointmentDate,
+                    }))
+            })
+
 
 			this.app.after(() => {
                 initDB(env.URL_MONGO)
