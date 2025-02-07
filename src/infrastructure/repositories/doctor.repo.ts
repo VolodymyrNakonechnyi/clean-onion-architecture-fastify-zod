@@ -1,5 +1,6 @@
+import { UUID } from "crypto";
 import { IDoctor } from "../../core/entities/doctor.js";
-import { DoctorId, DoctorPayload } from "../../core/entities/doctor.payload.js";
+import { DoctorPayload } from "../../core/entities/doctor.payload.js";
 import { DoctorMapper } from "../../core/mappers/doctor.mapper.js";
 import { IDoctorRepository } from "../../core/repositories/doctor.repo.js";
 import { doctorDAO } from "../database/doctor/doctor.dao.js";
@@ -10,8 +11,8 @@ export class DoctorRepository implements IDoctorRepository {
         return await doctorDAO.create(doctorPayload);
     }
 
-    async getDoctor(id: DoctorId): Promise<IDoctor | undefined> {
-        const doctor = await doctorDAO.findOne(id);
+    async getDoctor(id: UUID): Promise<IDoctor | undefined> {
+        const doctor = await doctorDAO.findOne({id});
 
         if(!doctor) {
             return;
@@ -20,8 +21,8 @@ export class DoctorRepository implements IDoctorRepository {
         return doctor;
     }
 
-    async addSlots(id: DoctorId, slots: Date[]): Promise<IDoctor | undefined | null> {
-        const doctor = await doctorDAO.findOne(id);
+    async addSlots(id: UUID, slots: Date[]): Promise<IDoctor | undefined | null> {
+        const doctor = await doctorDAO.findOne({id});
     
         if (!doctor) {
             return;

@@ -1,6 +1,4 @@
 import { UUID } from "crypto";
-import { DoctorId } from "./doctor.payload.js";
-import { UserId } from "./user.payload.js";
 
 export const AppointmentStatus = {
     SCHEDULED: 'scheduled',
