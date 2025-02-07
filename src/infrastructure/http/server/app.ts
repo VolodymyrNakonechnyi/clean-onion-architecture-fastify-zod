@@ -8,7 +8,7 @@ import routes from "../routes/index.js";
 import { UserRepository } from "../../repositories/user.repo.js";
 import { DoctorRepository } from "../../repositories/doctor.repo.js";
 import { AppointmentRepository } from "../../repositories/appointment.repo.js";
-import { NotificationReminder } from "../../../core/services/notification.srv.js";
+import { NotificationService, Reminder } from "../../../core/services/notification.srv.js";
 
 export class App {
     private app: FastifyInstance;
@@ -65,6 +65,29 @@ export class App {
             this.app.withTypeProvider<ZodTypeProvider>().route(route);
         }
     }
+
+    private async registerReminders(notificationService: NotificationService) {
+        const reminders: Reminder[] = [
+            {
+                time: 24 * 60 * 60 * 1000,
+                callback: (reminder) => {
+                    this.app.log.info({
+                        msg:`${reminder.time} | Hello ${reminder.user?.firstname}! Reminder: you have an appointment with ${reminder.doctor?.spec} tomorrow at ${reminder.appointmentDate}!`
+                    });
+                },
+            },
+            {
+                time: 2 * 60 * 60 * 1000,
+                callback: (reminder) => {
+                    this.app.log.info({
+                        msg: `${reminder.time} | Hello ${reminder.user?.firstname}! Reminder: you have an appointment with ${ reminder.doctor?.spec } in 2 hours at ${ reminder.appointmentDate }!`
+                    });
+                },
+            }
+        ];
+
+        notificationService.addReminders(reminders);
+    }
     
     public async initialize() {
         try {
@@ -74,23 +97,13 @@ export class App {
             const doctorRepository = new DoctorRepository();
             const userRepository = new UserRepository();
 
-            const notificationReminder = new NotificationReminder(appointmentRepository);
-            notificationReminder.onReminder((data) => {
-                this.app.log.info({
-                    msg: 'Appointment reminder triggered',
-                    appointment: {
-                        id: data.userId,
-                        datetime: data.appointmentDate,
-                    }
-                });
+            const notificationService = new NotificationService(
+                appointmentRepository, 
+                userRepository, 
+                doctorRepository
+            );
 
-                console.log('Appointment reminder triggered',
-                    JSON.stringify({
-                        id: data.userId,
-                        datetime: data.appointmentDate,
-                    }))
-            })
-
+            this.registerReminders(notificationService)
 
 			this.app.after(() => {
                 initDB(env.URL_MONGO)

@@ -1,7 +1,5 @@
 import { IAppointment } from "../entities/appointment.js";
 import { AppointmentId, AppointmentPayload } from "../entities/appointment.payload.js";
-import { DoctorId } from "../entities/doctor.payload.js";
-import { AppointmentMapper } from "../mappers/appointment.mapper.js";
 import { IAppointmentRepository } from "../repositories/appointment.repo.js";
 import { IDoctorRepository } from "../repositories/doctor.repo.js";
 

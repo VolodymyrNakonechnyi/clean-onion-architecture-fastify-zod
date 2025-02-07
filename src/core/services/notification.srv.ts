@@ -2,36 +2,52 @@ import EventEmitter from "node:events";
 import { IAppointmentRepository } from "../repositories/appointment.repo.js";
 import { UUID } from "node:crypto";
 import cron from "node-cron";
+import { IUserRepository } from "../repositories/user.repo.js";
+import { IDoctorRepository } from "../repositories/doctor.repo.js";
+import { IUser } from "../entities/user.js";
+import { IDoctor } from "../entities/doctor.js";
 
 type ReminderCallback = (reminder: {
-    userId: UUID,
+    user: IUser | undefined,
+    doctor: IDoctor | undefined,
+    time: Date,
     appointmentDate: Date,
     timeBeforeAppointment: Date
 }) => void;
 
-export class NotificationReminder extends EventEmitter {
+export interface Reminder {
+    time: number;
+    callback: ReminderCallback;
+}
+
+export class NotificationService {
     private scheduledReminders: Map<UUID, Date>;
     private appointmentRepository: IAppointmentRepository;
-    private reminderCallbacks: ReminderCallback[] = [];
-    private readonly reminderIntervals: number[] = [
-        24 * 60 * 60 * 1000, // 24 hours
-        2 * 60 * 60 * 1000,  // 2 hour
-    ];
+    private userRepository: IUserRepository;
+    private doctorRepository: IDoctorRepository;
+    private reminders: Reminder[] = [];
 
-    constructor(appointmentRepository: IAppointmentRepository) {
-        super();
+    constructor(
+        appointmentRepository: IAppointmentRepository, 
+        userRepository: IUserRepository,
+        doctorRepository: IDoctorRepository
+    ) {
         this.scheduledReminders = new Map();
         this.appointmentRepository = appointmentRepository;
+        this.userRepository = userRepository;
+        this.doctorRepository = doctorRepository;
 
         this.initializeCronJob();
     }
 
-    // Register callback for reminder notifications (like EventEmmiter)
-    onReminder(callback: ReminderCallback) {
-        this.reminderCallbacks.push(callback);
+    addReminders(reminders: Reminder[]) {
+        this.reminders = [
+            ...this.reminders,
+            ...reminders
+        ]
     }
 
-    // Put all reminders in Queue
+    // Put all appointments in Queue
     async sheduleReminders() {
         const relevantAppointments = await this.appointmentRepository.getRelevantAppointments();
 
@@ -52,8 +68,8 @@ export class NotificationReminder extends EventEmitter {
     }
 
     private calculateReminderTimes(appointmentDate: Date): Date[] {
-        return this.reminderIntervals.map(interval => {
-            return new Date(appointmentDate.getTime() - interval);
+        return this.reminders.map(({ time }) => {
+            return new Date(appointmentDate.getTime() - time);
         });
     }
 
@@ -62,7 +78,7 @@ export class NotificationReminder extends EventEmitter {
         return new Date(timeDiff);
     }
 
-    private async checkAndTriggerReminders() {
+    public async checkAndTriggerReminders() {
         const now = new Date();
         const relevantAppointments = await this.appointmentRepository.getRelevantAppointments();
 
@@ -71,14 +87,19 @@ export class NotificationReminder extends EventEmitter {
             
             for (const reminderTime of reminderTimes) {
                 if (this.isWithinOneMinute(now, reminderTime)) {
+                    const user = await this.userRepository.getUser(appointment.userId);
+                    const doctor = await this.doctorRepository.getDoctor(appointment.doctorId);
+
                     const reminderData = {
-                        userId: appointment.userId,
+                        user: user,
+                        doctor: doctor,
+                        time: now,
                         appointmentDate: appointment.slot,
                         timeBeforeAppointment: this.getTimeBeforeAppointment(reminderTime, appointment.slot)
                     };
                     
                     // Notify all registered callbacks
-                    this.reminderCallbacks.forEach(callback => callback(reminderData));
+                    this.reminders.forEach(({ callback }) => callback(reminderData));
                 }
             }
         }

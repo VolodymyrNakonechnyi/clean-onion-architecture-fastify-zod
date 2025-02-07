@@ -1,9 +1,9 @@
-import { Schema } from "mongoose";
+import mongoose, { Schema } from "mongoose";
 import { randomUUID } from "crypto";
 
 export const UserSchema = new Schema({
     id: {
-        type: String, 
+        type: mongoose.Schema.Types.UUID, 
         default: randomUUID(), 
         required: true,
         unique: true,

@@ -1,10 +1,11 @@
+import { UUID } from "node:crypto";
 import { IUser } from "../entities/user.js";
-import { UserPayload, UserId } from "../entities/user.payload.js";
+import { UserPayload } from "../entities/user.payload.js";
 import { IUserRepository } from "../repositories/user.repo.js";
 
 interface IUserService {
     createUser(userPayload: UserPayload): Promise<IUser>,
-    getUser(id: UserId): Promise<IUser | undefined>
+    getUser(id: UUID): Promise<IUser | undefined>
 };
 
 export const userService = (
@@ -14,7 +15,7 @@ export const userService = (
         return await userRepository.createUser(userPayload);
     },
 
-    getUser: async (id: UserId): Promise<IUser | undefined> => {
+    getUser: async (id: UUID): Promise<IUser | undefined> => {
         return await userRepository.getUser(id);
     }
 });
